@@ -86,7 +86,25 @@ class GoogleApiConnector:
 
         event = self.calender_service.events().insert(calendarId='primary', body=event).execute()
 
+    def check_if_event_exist(self, show_name: str, episode_name: str, episode_number: int, date: datetime.datetime):
+        events_result = self.calender_service.events().list(calendarId='primary', timeMin=date.isoformat() + "Z",
+                                                            maxResults=20, singleEvents=True,
+                                                            orderBy='startTime').execute()
+        events = events_result.get('items', [])
+        for event in events:
+            summary = event.get("summary", "")
+            if summary == f"{show_name} {episode_number} {episode_name}":
+                return True
+
+        return False
+
 
 if __name__ == "__main__":
     connector = GoogleApiConnector()
-    connector.create_new_calender_event("Chainsawman", "cool name", 15, datetime.datetime.utcnow() + datetime.timedelta(hours=2))
+    start_time = datetime.datetime(day=31, month=10, year=2022, hour=20, minute=30)
+    exists = connector.check_if_event_exist("Chainsawman", "cool name", 15, start_time)
+    if exists:
+        print("event already exists")
+    else:
+        print("Creating event")
+        connector.create_new_calender_event("Chainsawman", "cool name", 15, start_time)
