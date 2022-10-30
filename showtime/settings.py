@@ -126,3 +126,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Movie Databse setting
 TMDB_API_KEY = ""
+
+from showtime.google_settings import *
