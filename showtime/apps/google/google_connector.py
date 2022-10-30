@@ -9,6 +9,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from django.conf import settings
+
+from showtime.apps.google.models import GoogleAuthToken
+
 
 class GoogleApiConnector:
     # If modifying these scopes, delete the file token.json.
@@ -26,20 +30,26 @@ class GoogleApiConnector:
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists('../../../token.json'):
-            self.creds = Credentials.from_authorized_user_file('../../../token.json', self.SCOPES)
+        token = GoogleAuthToken.objects.filter().first()
+        if token:
+            self.creds = Credentials.from_authorized_user_info(token.as_dict, scopes=self.SCOPES)
 
         # If there are no (valid) credentials available, let the user log in.
         if not self.creds or not self.creds.valid:
             if self.creds and self.creds.expired and self.creds.refresh_token:
                 self.creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    '../../../credentials.json', self.SCOPES)
+                flow = InstalledAppFlow.from_client_config(settings.GOOGLE_OAUTH_CREDENTIALS, scopes=self.SCOPES)
                 self.creds = flow.run_local_server(port=0)
+
             # Save the credentials for the next run
-            with open('../../../token.json', 'w') as token:
-                token.write(self.creds.to_json())
+            GoogleAuthToken.objects.create(
+                token=self.creds.token,
+                refresh_token=self.creds.refresh_token,
+                token_uri=self.creds.token_uri,
+                client_id=self.creds.client_id,
+                expiry=self.creds.expiry
+            )
 
     def get_calender_events(self, num_events):
         try:
@@ -97,14 +107,3 @@ class GoogleApiConnector:
                 return True
 
         return False
-
-
-if __name__ == "__main__":
-    connector = GoogleApiConnector()
-    start_time = datetime.datetime(day=31, month=10, year=2022, hour=20, minute=30)
-    exists = connector.check_if_event_exist("Chainsawman", "cool name", 15, start_time)
-    if exists:
-        print("event already exists")
-    else:
-        print("Creating event")
-        connector.create_new_calender_event("Chainsawman", "cool name", 15, start_time)

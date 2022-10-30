@@ -11,7 +11,8 @@ class GoogleAuthToken(models.Model):
     expiry = models.DateTimeField()
 
     @property
-    def get_token_dict(self):
+    def as_dict(self):
         model_dict = model_to_dict(self)
         model_dict["scope"] = ["https://www.googleapis.com/auth/calendar"]
-        return
+        model_dict["expiry"] = model_dict["expiry"].strftime("%Y-%m-%dT%H:%M:%S")
+        return model_dict
