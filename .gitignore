@@ -4,3 +4,4 @@ credentials.json
 token.json
 credentials.json
 TMDB_api_key.py
+*__pycache__*
