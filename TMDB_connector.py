@@ -1,7 +1,7 @@
 import requests
+import TMDB_api_key
 
-
-API_KEY = ''
+API_KEY = TMDB_api_key.API_KEY
 
 def get_id(name):
 
